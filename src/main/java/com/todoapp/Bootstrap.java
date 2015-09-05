@@ -15,7 +15,7 @@ public class Bootstrap {
 
     public static void main(String[] args) throws Exception {
         setIpAddress(IP_ADDRESS);
-        setPort(PORT);
+        setPort(5000);
         staticFileLocation("/public");
         new TodoResource(new TodoService(mongo()));
     }
