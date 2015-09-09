@@ -2,9 +2,9 @@ package com.todoapp;
 
 import com.mongodb.*;
 
+import static spark.Spark.get;
 import static spark.Spark.setIpAddress;
 import static spark.Spark.setPort;
-import static spark.SparkBase.staticFileLocation;
 
 /**
  * Created by shekhargulati on 09/06/14.
@@ -16,8 +16,12 @@ public class Bootstrap {
     public static void main(String[] args) throws Exception {
         setIpAddress(IP_ADDRESS);
         setPort(PORT);
-        staticFileLocation("/public");
-        new TodoResource(new TodoService(mongo()));
+        /*staticFileLocation("/public");
+        new TodoResource(new TodoService(mongo()));*/
+        get("/",(request, response) -> {
+
+            return System.getenv().toString().replace(", ","<br>");
+        });
     }
 
     private static DB mongo() throws Exception {
