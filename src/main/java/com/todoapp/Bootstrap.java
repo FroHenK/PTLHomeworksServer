@@ -2,6 +2,9 @@ package com.todoapp;
 
 import com.mongodb.*;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+
 import static spark.Spark.get;
 import static spark.Spark.setIpAddress;
 import static spark.Spark.setPort;
@@ -18,10 +21,16 @@ public class Bootstrap {
         setPort(PORT);
         /*staticFileLocation("/public");
         new TodoResource(new TodoService(mongo()));*/
-        get("/",(request, response) -> {
+        Class.forName("org.postgresql.Driver");
+        try {
 
-            return System.getenv().toString().replace(", ","<br>");
-        });
+        Connection connection= DriverManager.getConnection("jdbc:postgresql://127.7.39.2:5432/roguelike","adminfrnlc58","CMGyyc7HPEU7");
+            get("/",(request, response) -> "Nope");
+        }catch (Exception e){
+            get("/",(request, response) -> e.toString());
+
+
+        }
     }
 
     private static DB mongo() throws Exception {
