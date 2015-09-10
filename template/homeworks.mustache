@@ -1,0 +1,76 @@
+<html  class="ng-scope">
+<head>
+
+    <title>Узнать домашку</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+    <meta charset="UTF-8"/>
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"/>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+</head>
+<body>
+<h2>Домашняя работа для: {{requestDate}}</h2>
+<nav>
+    <ul class="pagination">
+        <li>
+            <a href="{{previousDate}}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        <li><a href="#">{{requestDate}}</a></li>
+        <li>
+            <a href="{{nextDate}}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+
+
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Предмет</th>
+            <th>Что именно</th>
+            {{#isAdmin}}<th>Удаление</th>{{/isAdmin}}
+        </tr>
+
+        </thead>
+        <tbody>
+        {{#homeworks}}
+        <tr>
+            <td>{{subject.localeName}}</td>
+            <td>{{body}}</td>
+            {{#isAdmin}}<td><a href="/delete_homework/{{idString}}" class="btn btn-default">Удалить</a> </td>{{/isAdmin}}
+        </tr>
+        {{/homeworks}}
+        <tr>
+            {{#isAdmin}}
+            <form action="/createFromDate" method="post">
+
+
+            <input  type="date" name="date" value="{{requestDateD}}" hidden="hidden"  ></input><br/>
+            <td><select name="subject">
+                {{#subjects}}
+                <option value="{{name}}">{{localeName}}</option>
+                {{/subjects}}
+
+            </select><br/></td>
+            <td><textarea rows="4" cols="50" name="body"></textarea><br/><button type="submit" class="btn btn-default">Добавить домашку</button></td>
+            </form>
+
+            {{/isAdmin}}
+        </tr>
+        </tbody>
+    </table>
+
+
+
+
+<a href="/" class="btn btn-primary">Назад</a>
+</body>
+</html>

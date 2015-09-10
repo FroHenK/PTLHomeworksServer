@@ -4,10 +4,10 @@ import com.mongodb.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Calendar;
 
-import static spark.Spark.get;
-import static spark.Spark.setIpAddress;
-import static spark.Spark.setPort;
+import static spark.Spark.*;
 
 /**
  * Created by shekhargulati on 09/06/14.
@@ -15,6 +15,11 @@ import static spark.Spark.setPort;
 public class Bootstrap {
     private static final String IP_ADDRESS = System.getenv("OPENSHIFT_DIY_IP") != null ? System.getenv("OPENSHIFT_DIY_IP") : "localhost";
     private static final int PORT = System.getenv("OPENSHIFT_DIY_PORT") != null ? Integer.parseInt(System.getenv("OPENSHIFT_DIY_PORT")) : 8080;
+    private static final String POSTGRESQL_HOST = System.getenv("OPENSHIFT_POSTGRESQL_DB_HOST") != null ? System.getenv("OPENSHIFT_POSTGRESQL_DB_HOST") : "localhost";
+    private static final int POSTGRESQL_PORT = System.getenv("OPENSHIFT_POSTGRESQL_DB_PORT") != null ? Integer.parseInt(System.getenv("OPENSHIFT_POSTGRESQL_DB_PORT")) : 5432;;
+    private static final String POSTGRESQL_DATABASE  = "roguelike";
+    private static final String POSTGRESQL_USER  = System.getenv("OPENSHIFT_POSTGRESQL_DB_USERNAME") != null ? System.getenv("OPENSHIFT_POSTGRESQL_DB_USERNAME") : "postgres";
+    private static final String POSTGRESQL_ADMIN = System.getenv("OPENSHIFT_POSTGRESQL_DB_PASSWORD") != null ? System.getenv("OPENSHIFT_POSTGRESQL_DB_PASSWORD") : "1d8327deb882cf99";
 
     public static void main(String[] args) throws Exception {
         setIpAddress(IP_ADDRESS);
@@ -22,10 +27,16 @@ public class Bootstrap {
         /*staticFileLocation("/public");
         new TodoResource(new TodoService(mongo()));*/
         Class.forName("org.postgresql.Driver");
+
+        Connection connection= DriverManager.getConnection("jdbc:postgresql://" + POSTGRESQL_HOST + ":" + POSTGRESQL_PORT + "/" + POSTGRESQL_DATABASE, POSTGRESQL_USER, POSTGRESQL_ADMIN);
+        HWService hwService = new HWService(connection);
+        HWResource hwResource = new HWResource(hwService);
+        /*Calendar instance = Calendar.getInstance();
+        instance.set(Calendar.DAY_OF_MONTH,11);
+        hwService.insert("Russian", "123 123 q", instance);*/
         try {
 
-        Connection connection= DriverManager.getConnection("jdbc:postgresql://127.7.39.2:5432/roguelike","adminfrnlc58","CMGyyc7HPEU7");
-            get("/",(request, response) -> "Nope");
+
         }catch (Exception e){
             get("/",(request, response) -> e.toString());
 
