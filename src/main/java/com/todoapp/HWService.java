@@ -11,11 +11,11 @@ import java.util.Date;
  */
 public class HWService {
     private static final String TABLE_HOMEWORKS = "homeworks";
-    public static final String HOMEWORK_ID="id",
-            HOMEWORK_BODY="body",
-            HOMEWORK_SUBJECT="subject",
-            HOMEWORK_CREATED_ON="createdOn",
-            HOMEWORK_DATE_FOR="dateFor";
+    public static final String HOMEWORK_ID = "id",
+            HOMEWORK_BODY = "body",
+            HOMEWORK_SUBJECT = "subject",
+            HOMEWORK_CREATED_ON = "createdOn",
+            HOMEWORK_DATE_FOR = "dateFor";
 
 
     private Connection connection;
@@ -26,14 +26,16 @@ public class HWService {
         Calendar cal = Calendar.getInstance();
         dateFormat = new SimpleDateFormat("yyyy.MM.dd", Locale.ENGLISH);
 
-        }
-    private static Calendar dateToCalendar(Date date) {
+    }
+
+    public static Calendar dateToCalendar(Date date) {
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         return calendar;
 
     }
+
     public List<Homework> findAll() throws SQLException {
         List<Homework> homeworks = new ArrayList<>();
         /*DBCursor dbObjects = homeworksCollection.find();
@@ -45,7 +47,31 @@ public class HWService {
         try {
             statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM " + TABLE_HOMEWORKS);
-            while (resultSet.next()){
+            while (resultSet.next()) {
+
+                homeworks.add(parseHomework(resultSet));
+            }
+        } catch (SQLException | ParseException e) {
+            e.printStackTrace();
+        } finally {
+            if (statement != null)
+                statement.close();
+        }
+        return homeworks;
+    }
+
+    public List<Homework> find(Calendar calendar) throws SQLException {
+        List<Homework> homeworks = new ArrayList<>();
+        /*DBCursor dbObjects = homeworksCollection.find();
+        while (dbObjects.hasNext()) {
+            DBObject dbObject = dbObjects.next();
+            homeworks.add(new Homework((BasicDBObject) dbObject));
+        }*/
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(String.format("SELECT * FROM %s WHERE \"%s\"='%s';", TABLE_HOMEWORKS, HOMEWORK_DATE_FOR, formatCalendar(calendar)));
+            while (resultSet.next()) {
 
                 homeworks.add(parseHomework(resultSet));
             }
@@ -54,27 +80,49 @@ public class HWService {
         } catch (ParseException e) {
             e.printStackTrace();
         } finally {
-            if(statement!=null)
+            if (statement != null)
                 statement.close();
         }
         return homeworks;
     }
-    public void insert(String subject,String body,
+
+    public List<Homework> delete(Integer id) throws SQLException {
+        List<Homework> homeworks = new ArrayList<>();
+        /*DBCursor dbObjects = homeworksCollection.find();
+        while (dbObjects.hasNext()) {
+            DBObject dbObject = dbObjects.next();
+            homeworks.add(new Homework((BasicDBObject) dbObject));
+        }*/
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+            statement.executeQuery(String.format("DELETE FROM %s WHERE \"%s\"=%d;", TABLE_HOMEWORKS, HOMEWORK_ID, id));
+
+        } catch (SQLException e) {
+            // e.printStack1Trace(); TODO l
+        } finally {
+            if (statement != null)
+                statement.close();
+        }
+        return homeworks;
+    }
+
+    public void insert(String subject, String body,
                        Calendar date
-                       ) throws SQLException {
-        PreparedStatement preparedStatement=null;
+    ) throws SQLException {
+        PreparedStatement preparedStatement = null;
         try {
 
             preparedStatement = connection.prepareStatement("INSERT INTO homeworks(body, subject, \"createdOn\", \"dateFor\") VALUES (?, ?, ?, ?);");
             preparedStatement.setString(1, body);
-            preparedStatement.setString(2,subject);
+            preparedStatement.setString(2, subject);
             preparedStatement.setString(3, formatCalendar(Calendar.getInstance()));
             preparedStatement.setString(4, formatCalendar(date));
             preparedStatement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            if(preparedStatement!=null)
+            if (preparedStatement != null)
                 preparedStatement.close();
         }
     }
@@ -84,12 +132,12 @@ public class HWService {
     }
 
     private Homework parseHomework(ResultSet resultSet) throws SQLException, ParseException {
-        Integer id= resultSet.getInt(HOMEWORK_ID);
-        String subject=resultSet.getString(HOMEWORK_SUBJECT);
-        String dateFor=resultSet.getString(HOMEWORK_DATE_FOR);
-        String createdOn=resultSet.getString(HOMEWORK_CREATED_ON);
-        String body=resultSet.getString(HOMEWORK_BODY);
-        return new Homework(id,subject,dateToCalendar(dateFormat.parse(dateFor)),body,dateToCalendar(dateFormat.parse(createdOn)));
+        Integer id = resultSet.getInt(HOMEWORK_ID);
+        String subject = resultSet.getString(HOMEWORK_SUBJECT);
+        String dateFor = resultSet.getString(HOMEWORK_DATE_FOR);
+        String createdOn = resultSet.getString(HOMEWORK_CREATED_ON);
+        String body = resultSet.getString(HOMEWORK_BODY);
+        return new Homework(id, subject, dateToCalendar(dateFormat.parse(dateFor)), body, dateToCalendar(dateFormat.parse(createdOn)));
     }
     /*
     public List<Homework> find(Calendar calendar) {
@@ -107,7 +155,6 @@ public class HWService {
 
         return homeworks;
     }*/
-
 
 
 }

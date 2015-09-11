@@ -1,0 +1,44 @@
+<html  class="ng-scope">
+<head>
+
+    <title>Вся домашняя работа</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+    <meta charset="UTF-8"/>
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"/>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+</head>
+<body>
+{{> errorlist}}
+<h2>Вся домашняя работа</h2>
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>Предмет</th>
+        <th>Что именно</th>
+        {{#isAdmin}}<th>Удаление</th>{{/isAdmin}}
+    </tr>
+
+    </thead>
+    <tbody>
+    {{#homeworks}}
+    <tr>
+
+        <td>{{subject}}</td>
+        <td>{{body}}</td>
+        {{#isAdmin}}<td><a href="/delete_homework/{{requestDate}}/{{id}}/" class="btn btn-default">Удалить</a> </td>{{/isAdmin}}
+    </tr>
+    {{/homeworks}}
+
+    </tbody>
+</table>
+
+
+
+
+<a href="/" class="btn btn-primary">Назад</a>
+</body>
+</html>

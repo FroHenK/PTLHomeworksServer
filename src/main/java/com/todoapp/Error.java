@@ -5,9 +5,14 @@ package com.todoapp;
  */
 public class Error {
     private String name;
-
-    public Error(String name) {
+    private String title;
+    public Error(String name,String title) {
         this.name = name;
+        this.title=title;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public String getName() {

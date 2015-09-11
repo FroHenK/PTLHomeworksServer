@@ -39,6 +39,25 @@ public class Homework {
     public String getBody() {
         return body;
     }
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public void setDate(Calendar date) {
+        this.date = date;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public void setCreatedOn(Calendar createdOn) {
+        this.createdOn = createdOn;
+    }
 
     @Override
     public String toString() {

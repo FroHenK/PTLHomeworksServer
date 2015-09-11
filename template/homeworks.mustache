@@ -12,6 +12,7 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 </head>
 <body>
+{{> errorlist}}
 <h2>Домашняя работа для: {{requestDate}}</h2>
 <nav>
     <ul class="pagination">
@@ -43,23 +44,15 @@
         <tbody>
         {{#homeworks}}
         <tr>
-            <td>{{subject.localeName}}</td>
+            <td>{{subject}}</td>
             <td>{{body}}</td>
-            {{#isAdmin}}<td><a href="/delete_homework/{{idString}}" class="btn btn-default">Удалить</a> </td>{{/isAdmin}}
+            {{#isAdmin}}<td><a href="/delete_homework/{{requestDate}}/{{id}}/" class="btn btn-default">Удалить</a> </td>{{/isAdmin}}
         </tr>
         {{/homeworks}}
         <tr>
             {{#isAdmin}}
-            <form action="/createFromDate" method="post">
-
-
-            <input  type="date" name="date" value="{{requestDateD}}" hidden="hidden"  ></input><br/>
-            <td><select name="subject">
-                {{#subjects}}
-                <option value="{{name}}">{{localeName}}</option>
-                {{/subjects}}
-
-            </select><br/></td>
+            <form action="/create/{{requestDate}}/" method="post">
+            <td><input type="text" name="subject"/></td>
             <td><textarea rows="4" cols="50" name="body"></textarea><br/><button type="submit" class="btn btn-default">Добавить домашку</button></td>
             </form>
 

@@ -30,7 +30,9 @@ public class Bootstrap {
 
         Connection connection= DriverManager.getConnection("jdbc:postgresql://" + POSTGRESQL_HOST + ":" + POSTGRESQL_PORT + "/" + POSTGRESQL_DATABASE, POSTGRESQL_USER, POSTGRESQL_ADMIN);
         HWService hwService = new HWService(connection);
-        HWResource hwResource = new HWResource(hwService);
+        UserService userService = new UserService(connection);
+        SubjectService subjectService = new SubjectService(connection);
+        HWResource hwResource = new HWResource(hwService, userService, subjectService);
         /*Calendar instance = Calendar.getInstance();
         instance.set(Calendar.DAY_OF_MONTH,11);
         hwService.insert("Russian", "123 123 q", instance);*/
