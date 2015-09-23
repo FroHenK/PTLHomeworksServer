@@ -11,6 +11,9 @@ import spark.ModelAndView;
 import spark.Request;
 import spark.template.mustache.MustacheTemplateEngine;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.StringWriter;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -59,13 +62,46 @@ public class HWResource {
 
         });
 
-        staticFileLocation("template");
         initHW();
         initAdmin();
     }
 
     private void initAdmin() {
+        before((request, response) -> {
+            //Surveillance
+            if(amIAdmin(request,new HashMap<>()))
+                return;//Don't peek for admins
+            String ip = request.headers("X-Forwarded-For");
+            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.headers("Proxy-Client-IP");
+            }
+            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.headers("WL-Proxy-Client-IP");
+            }
+            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.headers("HTTP_CLIENT_IP");
+            }
+            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.headers("HTTP_X_FORWARDED_FOR");
+            }
+            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+                ip = request.ip();
+            }
+            FileWriter fileWriter = new FileWriter("client_ips.logs", true);
+            fileWriter.append(String.format("%s %s\n<br>", dateFormat.format(new java.util.Date()), ip));
+            fileWriter.close();
+        });
+        get("/iplogs/",(request, response) -> {
+            if (!amIAdmin(request)) {
+                return "Nope you are not admin";
 
+            }
+            HashMap map = new HashMap();
+
+            return new MustacheTemplateEngine().render(new ModelAndView(map, "client_ips.logs"));
+
+
+        });
         get("/login", (request, response) -> {
             HashMap<String, Object> map = new HashMap<String, Object>();
             return new MustacheTemplateEngine().render(new ModelAndView(map, "template/login.mustache"));
@@ -85,6 +121,88 @@ public class HWResource {
 
             map.put("errors", new Error("Wrong password or login", "Error"));
             return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
+        });
+
+        post("/create/:date/", (request, response) -> {
+            if (!amIAdmin(request)) {
+                return "Nope you are not admin";
+
+            }
+            String requestDate = request.params("date");
+            if (requestDate.length() == 0) {
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("errors", new Error("You didn't enter date", "Error"));
+                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
+            }
+            Calendar calendar;
+            try {
+                calendar = HWService.dateToCalendar(dateFormat.parse(requestDate));
+                service.insert(request.queryParams("subject"), request.queryParams("body"), calendar);
+
+                List<Homework> homeworks = service.find(calendar);
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("homeworks", homeworks);
+
+                amIAdmin(request, map);
+                map.put("requestDate", formatString(calendar));
+                calendar.add(Calendar.DATE, -1);
+                map.put("previousDate", "/get_homework/?date=" + formatString(calendar));
+                calendar.add(Calendar.DATE, 2);
+                map.put("nextDate", "/get_homework/?date=" + formatString(calendar));
+                map.put("subjects", subjectService.findAll());
+                response.redirect("/get_homework/?date=" + requestDate);
+                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/homeworks.mustache"));
+            } catch (Exception e) {
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("errors", new Error(e.toString(), "Error"));
+                logger.log(Level.WARNING, "Some error", e);
+                response.status(500);
+                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
+            }
+
+
+            //return requestDate;
+        });
+
+        get("/delete_homework/:date/:id/", (request, response) -> {
+            if (!amIAdmin(request)) {
+                return "Nope you are not admin";
+
+            }
+            String requestDate = request.params("date");
+            if (requestDate.length() == 0) {
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("errors", new Error("You didn't enter date", "Error"));
+                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
+            }
+            Calendar calendar;
+            try {
+                calendar = HWService.dateToCalendar(dateFormat.parse(requestDate));
+                service.delete(Integer.valueOf(request.params("id")));
+
+                List<Homework> homeworks = service.find(calendar);
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("homeworks", homeworks);
+
+                amIAdmin(request, map);
+                map.put("requestDate", formatString(calendar));
+                calendar.add(Calendar.DATE, -1);
+                map.put("previousDate", "/get_homework/?date=" + formatString(calendar));
+                calendar.add(Calendar.DATE, 2);
+                map.put("nextDate", "/get_homework/?date=" + formatString(calendar));
+                map.put("subjects", subjectService.findAll());
+                response.redirect("/get_homework/?date=" + requestDate);
+                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/homeworks.mustache"));
+            } catch (Exception e) {
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                logger.log(Level.WARNING, "Some error", e);
+                response.status(500);
+                map.put("errors", new Error(e.toString(), "Error"));
+                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
+            }
+
+
+            //return requestDate;
         });
     }
 
@@ -153,86 +271,6 @@ public class HWResource {
         initApi();
         //END MOBILE
 
-        post("/create/:date/", (request, response) -> {
-            if (!amIAdmin(request)) {
-                return "Nope you are not admin";
-
-            }
-            String requestDate = request.params("date");
-            if (requestDate.length() == 0) {
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("errors", new Error("You didn't enter date", "Error"));
-                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
-            }
-            Calendar calendar;
-            try {
-                calendar = HWService.dateToCalendar(dateFormat.parse(requestDate));
-                service.insert(request.queryParams("subject"), request.queryParams("body"), calendar);
-
-                List<Homework> homeworks = service.find(calendar);
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("homeworks", homeworks);
-
-                amIAdmin(request, map);
-                map.put("requestDate", formatString(calendar));
-                calendar.add(Calendar.DATE, -1);
-                map.put("previousDate", "/get_homework/?date=" + formatString(calendar));
-                calendar.add(Calendar.DATE, 2);
-                map.put("nextDate", "/get_homework/?date=" + formatString(calendar));
-                map.put("subjects", subjectService.findAll());
-                response.redirect("/get_homework/?date=" + requestDate);
-                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/homeworks.mustache"));
-            } catch (Exception e) {
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("errors", new Error(e.toString(), "Error"));
-                logger.log(Level.WARNING, "Some error", e);
-                response.status(500);
-                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
-            }
-
-
-            //return requestDate;
-        });
-        get("/delete_homework/:date/:id/", (request, response) -> {
-            if (!amIAdmin(request)) {
-                return "Nope you are not admin";
-
-            }
-            String requestDate = request.params("date");
-            if (requestDate.length() == 0) {
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("errors", new Error("You didn't enter date", "Error"));
-                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
-            }
-            Calendar calendar;
-            try {
-                calendar = HWService.dateToCalendar(dateFormat.parse(requestDate));
-                service.delete(Integer.valueOf(request.params("id")));
-
-                List<Homework> homeworks = service.find(calendar);
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("homeworks", homeworks);
-
-                amIAdmin(request, map);
-                map.put("requestDate", formatString(calendar));
-                calendar.add(Calendar.DATE, -1);
-                map.put("previousDate", "/get_homework/?date=" + formatString(calendar));
-                calendar.add(Calendar.DATE, 2);
-                map.put("nextDate", "/get_homework/?date=" + formatString(calendar));
-                map.put("subjects", subjectService.findAll());
-                response.redirect("/get_homework/?date=" + requestDate);
-                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/homeworks.mustache"));
-            } catch (Exception e) {
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                logger.log(Level.WARNING, "Some error", e);
-                response.status(500);
-                map.put("errors", new Error(e.toString(), "Error"));
-                return new MustacheTemplateEngine().render(new ModelAndView(map, "template/main.mustache"));
-            }
-
-
-            //return requestDate;
-        });
     }
 
     private void initApi() {
@@ -273,7 +311,7 @@ public class HWResource {
     }
 
     private boolean amIAdmin(Request request) {
-        if (request.cookie(SESSION).equals(SESSION_VALUE)) {
+        if (request.cookie(SESSION)!=null&&request.cookie(SESSION).equals(SESSION_VALUE)) {
             return true;
         }
         return false;
