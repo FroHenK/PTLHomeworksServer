@@ -56,7 +56,10 @@ public class HWResource {
             public void close() throws SecurityException {
 
             }
+
         });
+
+        staticFileLocation("template");
         initHW();
         initAdmin();
     }
@@ -147,31 +150,7 @@ public class HWResource {
 
         //MOBILE
 
-        get("/get_homeworks_json/", (request, response) -> {
-
-
-            Calendar calendar;
-            try {
-
-                List<Homework> homeworks = service.findAll();
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("homeworks", homeworks);
-
-
-                //json writing
-                return gson.toJson(map);
-            } catch (Exception e) {
-                HashMap<String, Object> map = new HashMap<String, Object>();
-
-                response.status(500);
-                logger.log(Level.WARNING, "Some error", e);
-                map.put("errors", new Error(e.toString(), "Error"));
-                return gson.toJson(map);
-            }
-
-
-            //return requestDate;
-        });
+        initApi();
         //END MOBILE
 
         post("/create/:date/", (request, response) -> {
@@ -254,6 +233,35 @@ public class HWResource {
 
             //return requestDate;
         });
+    }
+
+    private void initApi() {
+        get("/get_homeworks_json/", (request, response) -> {
+
+
+            Calendar calendar;
+            try {
+
+                List<Homework> homeworks = service.findAll();
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("homeworks", homeworks);
+
+
+                //json writing
+                return gson.toJson(map);
+            } catch (Exception e) {
+                HashMap<String, Object> map = new HashMap<String, Object>();
+
+                response.status(500);
+                logger.log(Level.WARNING, "Some error", e);
+                map.put("errors", new Error(e.toString(), "Error"));
+                return gson.toJson(map);
+            }
+
+
+            //return requestDate;
+        });
+
     }
 
     private boolean amIAdmin(Request request, HashMap<String, Object> map) {
